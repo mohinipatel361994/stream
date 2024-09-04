@@ -6,7 +6,7 @@ import json
 
 # Set your OpenAI API key securely
 openai.api_key = ''  # Replace with your actual OpenAI API key
-
+openai.api_key = st.secrets["secret_section"]["OPENAI_API_KEY"]
 # Function to extract text from PDF uploaded via Streamlit
 def extract_text_from_uploaded_pdf(uploaded_file):
     try:
