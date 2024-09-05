@@ -7,6 +7,7 @@ import json
 # Set your OpenAI API key securely
 openai.api_key = ''  # Replace with your actual OpenAI API key
 openai.api_key = st.secrets["secret_section"]["OPENAI_API_KEY"]
+
 # Function to extract text from PDF uploaded via Streamlit
 def extract_text_from_uploaded_pdf(uploaded_file):
     try:
@@ -100,11 +101,64 @@ def match_cv_with_criteria(cv_text, criteria_json):
             temperature=0.5
         )
 
-        return response.choices[0].message['content'].strip()
+        matching_results = response.choices[0].message['content'].strip()
+        results = json.loads(matching_results)
+
+        # Check pass/fail conditions based on required education, experience, skills, and certifications
+        pass_fail = "Pass"  # Default to pass
+        if not results.get("matching_education"):
+            pass_fail = "Fail"
+        if not results.get("matching_experience"):
+            pass_fail = "Fail"
+        if not results.get("matching_skills"):
+            pass_fail = "Fail"
+        if criteria.get("certifications") and not results.get("matching_certifications"):
+            pass_fail = "Fail"
+
+        # Add pass/fail result to the output
+        results["pass_or_fail"] = pass_fail
+
+        # Return the full results including pass/fail and brownie points
+        return json.dumps(results, indent=2)
 
     except json.JSONDecodeError as e:
         st.error(f"Error parsing criteria JSON: {e}")
         return {}
+
+# Function to beautify the results and highlight pass/fail
+# Function to beautify the results and highlight pass/fail
+def display_pass_fail_verdict(results):
+    pass_fail = results.get('pass_or_fail', 'Fail')
+
+    # Display pass/fail at the top with a bold, colored, and emoji-based verdict
+    if pass_fail == 'Pass':
+        st.markdown(f"## 🟢 **Final Verdict: PASS** ✔️")
+    else:
+        st.markdown(f"## 🔴 **Final Verdict: FAIL** ❌")
+
+    # Additional styling and section breakdown below (education, skills, etc.)
+    st.markdown("#### Education Matches:")
+    st.write(results.get("matching_education", "None"))
+
+    st.markdown("#### Experience Matches:")
+    st.write(results.get("matching_experience", "None"))
+
+    st.markdown("#### Skill Matches:")
+    st.write(results.get("matching_skills", "None"))
+
+    st.markdown("#### Certification Matches:")
+    st.write(results.get("matching_certifications", "None"))
+
+    st.markdown("#### Missing Points:")
+    st.write(results.get("missing_points", "None"))
+
+    st.markdown("#### Brownie Points:")
+    brownie_points = results.get("brownie_points", [])
+    for bp in brownie_points:
+        skill = bp.get("skill", "")
+        score = bp.get("score", 0)
+        st.markdown(f"**{skill}**: {score}/10")
+        st.progress(score / 10)
 
 # Streamlit app
 st.set_page_config(page_title="Resume Scanner", page_icon=":page_facing_up:", layout="wide")
@@ -157,28 +211,8 @@ if 'criteria_json' in st.session_state and cv_files:
             try:
                 results = json.loads(matching_results)
 
-                st.markdown("#### Education Matches:")
-                st.write(results.get("matching_education", "None"))
-
-                st.markdown("#### Experience Matches:")
-                st.write(results.get("matching_experience", "None"))
-
-                st.markdown("#### Skill Matches:")
-                st.write(results.get("matching_skills", "None"))
-
-                st.markdown("#### Certification Matches:")
-                st.write(results.get("matching_certifications", "None"))
-
-                st.markdown("#### Missing Points:")
-                st.write(results.get("missing_points", "None"))
-
-                st.markdown("#### Brownie Points:")
-                brownie_points = results.get("brownie_points", [])
-                for bp in brownie_points:
-                    skill = bp.get("skill", "")
-                    score = bp.get("score", 0)
-                    st.markdown(f"**{skill}**: {score}/10")  # Display the skill name and score
-                    st.progress(score / 10)  # Display the progress bar
+                # Display the pass/fail verdict at the top
+                display_pass_fail_verdict(results)
 
             except json.JSONDecodeError:
                 st.error("Error parsing the matching results.")
