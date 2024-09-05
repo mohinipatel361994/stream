@@ -126,7 +126,6 @@ def match_cv_with_criteria(cv_text, criteria_json):
         return {}
 
 # Function to beautify the results and highlight pass/fail
-# Function to beautify the results and highlight pass/fail
 def display_pass_fail_verdict(results):
     pass_fail = results.get('pass_or_fail', 'Fail')
 
@@ -178,8 +177,10 @@ jd_file = st.file_uploader("Upload Job Description PDF", type="pdf")
 
 if jd_file:
     jd_text = extract_text_from_uploaded_pdf(jd_file)
+    
+    # Display extracted Job Description text in a scrollable box
     st.markdown("### Extracted Text from Job Description:")
-    st.write(jd_text)
+    st.text_area("Job Description Text", jd_text, height=200)
 
     if st.button("Extract Criteria"):
         if jd_text:
@@ -200,8 +201,10 @@ cv_files = st.file_uploader("Upload CVs (multiple allowed)", type="pdf", accept_
 if 'criteria_json' in st.session_state and cv_files:
     for cv_file in cv_files:
         cv_text = extract_text_from_uploaded_pdf(cv_file)
+        
+        # Display extracted CV text in a scrollable box
         st.markdown(f"### Extracted Text from CV: `{cv_file.name}`")
-        st.write(cv_text)
+        st.text_area(f"CV Text - {cv_file.name}", cv_text, height=200)
 
         if cv_text:
             matching_results = match_cv_with_criteria(cv_text, st.session_state.criteria_json)
@@ -221,3 +224,4 @@ if 'criteria_json' in st.session_state and cv_files:
 else:
     if 'criteria_json' not in st.session_state:
         st.info("Please upload a job description PDF and extract criteria first.")
+
