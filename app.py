@@ -6,7 +6,6 @@ import re
 from datetime import datetime
 import pandas as pd
 import streamlit as st
-from dotenv import load_dotenv
 from PIL import Image
 import base64
 from dateutil import parser
@@ -100,9 +99,6 @@ st.markdown("""
         <h3 style="color: black;">AI based CV screening portal.</h3>
     </div>
 """, unsafe_allow_html=True)
-
-# Load environment variables
-load_dotenv()
 
 # Change background color using custom CSS
 st.markdown(
