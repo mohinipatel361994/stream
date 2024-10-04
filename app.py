@@ -176,7 +176,7 @@ def use_genai_to_extract_criteria(jd_text):
     )
     
     try:
-        response = openai.ChatCompletion.create(
+        response = openai.chat.completions.create(
             model="gpt-3.5-turbo",
             messages=[{"role": "system", "content": "You are a helpful assistant."},
                       {"role": "user", "content": prompt}],
