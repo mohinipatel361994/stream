@@ -123,7 +123,6 @@ with open('style.css') as f:
 # Example: Add your image handling or other logic here
 images = ['6MarkQ']
 
-openai.api_key = ''  # Replace with your actual OpenAI API key
 openai.api_key = st.secrets["secret_section"]["OPENAI_API_KEY"]
 
 
@@ -185,7 +184,7 @@ def use_genai_to_extract_criteria(jd_text):
             temperature=0.5
         )
         
-        content = response.choices[0].message['content'].strip()
+        content = response.choices[0].message.content.strip()
         
         try:
             return content
@@ -281,7 +280,7 @@ def match_cv_with_criteria(cv_text, criteria_json):
             "\"overall_skill_score\": 8.0}"
         )
 
-        response = openai.ChatCompletion.create(
+        response = openai.chat.completions.create(
             model="gpt-3.5-turbo",
             messages=[{"role": "system", "content": "You are a helpful assistant."},
                       {"role": "user", "content": prompt}],
@@ -289,7 +288,7 @@ def match_cv_with_criteria(cv_text, criteria_json):
             temperature=0.5
         )
 
-        matching_results = response.choices[0].message['content'].strip()
+        matching_results = response.choices[0].message.content.strip()
 
         results = json.loads(matching_results)
 
@@ -326,37 +325,35 @@ def match_cv_with_criteria(cv_text, criteria_json):
     except json.JSONDecodeError as e:
         st.error(f"Error parsing criteria JSON: {e}")
         return {}
-
+    
+if "justifications" not in st.session_state:
+    st.session_state.justifications = {}
 
 # Function to justify skill scoring based on the candidate's resume
 def get_skill_score_justification(candidate_name, skill, score, cv_text):
     prompt = (
-        f"Explain why the candidate's resume text matches the skill '{skill}' with a score of {score}/10. "
+        f"Explain why the candidate's resume text '{cv_text}' matches the skill '{skill}' with a score of {score}/10. "
         "The explanation should be based on the candidate's resume content."
     )
 
-    try:
-        response = openai.ChatCompletion.create(
-            model="gpt-3.5-turbo",
-            messages=[
-                {"role": "system", "content": "You are a helpful assistant."},
-                {"role": "user", "content": prompt}
-            ],
-            max_tokens=500,
-            temperature=0.7
-        )
-        
-        explanation = response.choices[0].message['content'].strip()
-        
-        # Store explanation in session state
-        st.session_state.justifications.setdefault(candidate_name, {})[skill] = explanation
-        
-        return explanation
-    
-    except Exception as e:
-        logging.error(f"Error generating justification: {e}")
-        return ""
+    # Using the 'openai.chat.completions.create' method
+    response = openai.chat.completions.create(
+        model="gpt-3.5-turbo",
+        messages=[
+            {"role": "system", "content": "You are a helpful assistant."},
+            {"role": "user", "content": prompt}
+        ],
+        max_tokens=500,
+        temperature=0.7
+    )
 
+    # Access the explanation from the response
+    explanation = response.choices[0].message.content.strip()
+
+    # Store explanation in session state
+    st.session_state.justifications.setdefault(candidate_name, {})[skill] = explanation
+
+    return explanation
 def display_pass_fail_verdict(results, cv_text):
     candidate_name = results['candidate']
     skill_scores = results.get("skill_scores", {})
