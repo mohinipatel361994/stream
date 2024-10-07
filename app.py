@@ -331,10 +331,18 @@ if "justifications" not in st.session_state:
 
 # Function to justify skill scoring based on the candidate's resume
 def get_skill_score_justification(candidate_name, skill, score, cv_text):
-    prompt = (
-        f"Explain why the candidate's resume text '{cv_text}' matches the skill '{skill}' with a score of {score}/10. "
-        "The explanation should be based on the candidate's resume content."
-    )
+    if score == 0:
+        prompt = (
+            f"Briefly explain in 2-3 bullet points why the candidate's resume text '{cv_text}' does not demonstrate the "
+            f"necessary skills for '{skill}', resulting in a score of {score}/10. Focus on clear, simple reasons why the "
+            "candidate lacks this skill."
+        )
+    else:
+        prompt = (
+            f"Provide a concise justification in 2-3 bullet points explaining why the candidate's resume text '{cv_text}' "
+            f"demonstrates a match for the skill '{skill}' with a score of {score}/10. Keep each bullet simple, focusing "
+            "on clear reasoning in 7-8 words per line. Avoid overly technical terms."
+        )
 
     # Using the 'openai.chat.completions.create' method
     response = openai.chat.completions.create(
@@ -343,7 +351,7 @@ def get_skill_score_justification(candidate_name, skill, score, cv_text):
             {"role": "system", "content": "You are a helpful assistant."},
             {"role": "user", "content": prompt}
         ],
-        max_tokens=500,
+        max_tokens=100,  # Adjust tokens to focus on concise answers
         temperature=0.7
     )
 
@@ -354,6 +362,7 @@ def get_skill_score_justification(candidate_name, skill, score, cv_text):
     st.session_state.justifications.setdefault(candidate_name, {})[skill] = explanation
 
     return explanation
+    
 def display_pass_fail_verdict(results, cv_text):
     candidate_name = results['candidate']
     skill_scores = results.get("skill_scores", {})
